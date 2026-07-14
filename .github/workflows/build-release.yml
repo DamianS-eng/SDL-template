@@ -43,6 +43,7 @@ jobs:
       - name: Archive executable
         run: |
           ls -la
+          echo "${EXEC}-${VERSION}"
           mkdir -p dist
           cp "./${EXEC}" "dist/${EXEC}-${VERSION}"
 
