@@ -111,8 +111,9 @@ jobs:
       - name: Build project
         shell: bash
         run: |
-          cd ..
-          echo "$(pwd)"
+          echo "Building project..."
+          ls -a
+          pwd
           make
 
       - name: Package
