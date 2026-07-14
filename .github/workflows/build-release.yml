@@ -13,21 +13,28 @@ env:
   EXEC: output
   
 jobs:
-  build:
+  version:
     runs-on: ubuntu-latest
-
+    outputs:
+      VERSION: ${{ steps.version.outputs.VERSION }}
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
       - name: Extract version from tag 
+        id: version
         run: |
           if [[ "$GITHUB_REF" == refs/tags/* ]]; then
             VERSION="${GITHUB_REF#refs/tags/}" 
           else
             VERSION="manual-${GITHUB_SHA::7}"
           fi
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT]
+          
+  linux:
+    needs: version
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       - name: Install build tools
         run: sudo apt-get update && sudo apt-get install -y build-essential pkg-config cmake ninja-build git
@@ -44,19 +51,138 @@ jobs:
       - name: Build project
         run: make
 
-      - name: Archive executable
+      - name: Package
         run: |
-          echo "${EXEC}-${VERSION}"
           mkdir -p dist
-          ls -la
-          cp "./${EXEC}" "dist/${EXEC}-${VERSION}"
+          cp "${EXEC}" "dist/${EXEC}-linux-${{ needs.version.outputs.VERSION }}"
+
+      - name: Upload linux artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux
+          path: dist/*
+
+  windows:
+    needs: version
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install tools
+        run: |
+          choco install cmake ninja mingw -y
+
+      - name: Build SDL3 for Windows
+        shell: bash
+        run: |
+          git clone https://github.com/libsdl-org/SDL.git 
+          cd SDL 
+          cmake -S . -B build -G Ninja -DSDL_STATIC=OFF -DSDL_SHARED=ON 
+          cmake --build build 
+          sudo cmake --install build
+
+      - name: Build project
+        shell: bash
+        run: make
+
+      - name: Package
+        shell: bash
+        run: |
+          mkdir -p dist
+          cp "${EXEC}.exe" \
+            "dist/${EXEC}-windows-${{ needs.version.outputs.VERSION }}.exe"
+
+      - name: Upload Windows exe
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows
+          path: dist/*
+
+  android:
+    needs: version
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake ninja-build git unzip
+      - name: Install Android SDK
+        uses: android-actions/setup-android@v3
+      - name: Install NDK
+        run: |
+          sdkmanager \
+            "platform-tools" \
+            "platforms;android-35" \
+            "build-tools;35.0.0" \
+            "ndk;27.0.12077973"
+      - name: Build SDL3 for Android
+        run: |
+          git clone https://github.com/libsdl-org/SDL.git
+          cp -r SDL/android-project android-build
+          mkdir -p android-build/app/src/main/jni/src
+          cp *.c android-build/app/src/main/jni/src/ || true
+          cp *.cpp android-build/app/src/main/jni/src/ || true
+          cp *.h android-build/app/src/main/jni/src/ || true
+      - name: Configure Project
+        run: |
+          cd android-build
+          sed -i \
+            "s/SDL3/${EXEC}/g" \
+            app/build.gradle
+          mkdir -p app/src/main/jni/SDL
+          ln -s \
+            ../../../../../../SDL \
+            app/src/main/jni/SDL
+      - name: Build Android APK
+        run: |
+          cd android-build
+          chmod +x gradlew
+          ./gradlew assembleDebug
+      - name: Package APK
+        run: |
+          mkdir dist
+          cp android-build/app/build/outputs/apk/debug/app-debug.apk \
+            "dist/${EXEC}-android-${{ needs.version.outputs.VERSION }}.apk"
+      - name: Upload Android apk
+        uses: actions/upload-artifact@v4
+        with:
+          name: android
+          path: dist/*
+
+  release:
+    needs:
+      - version
+      - linux
+      - windows
+      - android
+
+    if: always()
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Download successful artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+        continue-on-error: true
+
+      - name: Show available builds
+        run: |
+          echo "Artifacts:"
+          find dist -type f || true
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ env.VERSION }} 
-          name: Release ${{ env.VERSION }}
-          files: dist/*
+          tag_name: ${{ needs.version.outputs.VERSION }} 
+          name: Release ${{ needs.version.outputs.VERSION }}
+          files: dist/**/*
+          fail_on_unmatched_files: false
           overwrite_files: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
