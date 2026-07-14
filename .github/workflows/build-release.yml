@@ -106,7 +106,7 @@ jobs:
         shell: bash
         run: |
           cd ..
-          echo "${pwd}"
+          echo "$(pwd)"
           make
 
       - name: Package
