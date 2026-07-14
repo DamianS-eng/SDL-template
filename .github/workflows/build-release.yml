@@ -81,7 +81,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install tools
-        run: |
+        run: 
           choco install cmake ninja mingw -y
 
       - name: Cache SDL3
@@ -96,11 +96,17 @@ jobs:
         if: steps.sdl-cache.outputs.cache-hit != 'true'
         shell: bash
         run: |
+          echo "Before git clone"
+          pwd
+          ls -a
           git clone https://github.com/libsdl-org/SDL.git 
           cd SDL 
           cmake -S . -B build -G Ninja -DSDL_STATIC=OFF -DSDL_SHARED=ON 
           cmake --build build 
           cmake --install build
+          echo "Cmake success"
+          pwd
+          ls -a
 
       - name: Build project
         shell: bash
