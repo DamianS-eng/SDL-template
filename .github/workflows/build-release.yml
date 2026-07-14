@@ -81,8 +81,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install tools
-        run: 
-          choco install cmake ninja mingw -y
+        run: |
+          choco install cmake ninja mingw pkgconfiglite -y
 
       - name: Cache SDL3
         id: sdl-cache
