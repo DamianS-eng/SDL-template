@@ -79,7 +79,7 @@ jobs:
           cd SDL 
           cmake -S . -B build -G Ninja -DSDL_STATIC=OFF -DSDL_SHARED=ON 
           cmake --build build 
-          sudo cmake --install build
+          cmake --install build
 
       - name: Build project
         shell: bash
