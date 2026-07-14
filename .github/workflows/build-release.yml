@@ -101,7 +101,7 @@ jobs:
           ls -a
           git clone https://github.com/libsdl-org/SDL.git 
           cd SDL 
-          cmake -S . -B build -G Ninja -DSDL_STATIC=OFF -DSDL_SHARED=ON 
+          cmake -S . -B build -G Ninja -DSDL_STATIC=OFF -DSDL_SHARED=ON -DCMAKE_INSTALL_PREFIX=D:/a/SDL-template/SDL-template/SDL/install
           cmake --build build 
           cmake --install build
           echo "Cmake success. Verifying SDL3 install..."
