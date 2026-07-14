@@ -104,7 +104,10 @@ jobs:
 
       - name: Build project
         shell: bash
-        run: make
+        run: |
+          cd ..
+          echo "${pwd}"
+          make
 
       - name: Package
         shell: bash
