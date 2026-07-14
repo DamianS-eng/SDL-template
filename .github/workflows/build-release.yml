@@ -104,9 +104,10 @@ jobs:
           cmake -S . -B build -G Ninja -DSDL_STATIC=OFF -DSDL_SHARED=ON 
           cmake --build build 
           cmake --install build
-          echo "Cmake success"
-          pwd
-          ls -a
+          echo "Cmake success. Verifying SDL3 install..."
+          pkg-config --cflags sdl3
+          echo "Now checking include path"
+          ls "C:/SDL3/include/SDL3/*main*"
 
       - name: Build project
         shell: bash
