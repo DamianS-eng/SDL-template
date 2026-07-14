@@ -1,0 +1,56 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+env: 
+  EXEC: output
+  
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Extract version from tag 
+        run: | 
+          VERSION="${GITHUB_REF#refs/tags/}" 
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+      - name: Install build tools
+        run: sudo apt-get update && sudo apt-get install -y build-essential pkg-config cmake ninja-build git
+
+      - name: Build and install SDL3 from source 
+        run: |
+          sudo apt-get install -y gnome-desktop-testing libasound2-dev libpulse-dev libfribidi-dev libjack-dev libsndio-dev libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxfixes-dev libxi-dev libxss-dev libxtst-dev libxkbcommon-dev libdrm-dev libgbm-dev libgl1-mesa-dev libgles2-mesa-dev libegl1-mesa-dev libdbus-1-dev libibus-1.0-dev libudev-dev libthai-dev libpipewire-0.3-dev libwayland-dev libdecor-0-dev
+          git clone https://github.com/libsdl-org/SDL.git 
+          cd SDL 
+          cmake -S . -B build -G Ninja -DSDL_STATIC=OFF -DSDL_SHARED=ON 
+          cmake --build build 
+          sudo cmake --install build
+
+      - name: Build project
+        run: make
+
+      - name: Archive executable
+        run: |
+          ls -la
+          mkdir -p dist
+          cp "./${EXEC}" "dist/${EXEC}-${VERSION}"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.VERSION }} 
+          name: Release ${{ env.VERSION }}
+          files: dist/*
+          overwrite_files: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
