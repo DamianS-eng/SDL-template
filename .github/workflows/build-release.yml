@@ -27,7 +27,7 @@ jobs:
           else
             VERSION="manual-${GITHUB_SHA::7}"
           fi
-          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT]
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
           
   linux:
     needs: version
