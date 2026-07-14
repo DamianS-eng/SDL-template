@@ -21,8 +21,12 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Extract version from tag 
-        run: | 
-          VERSION="${GITHUB_REF#refs/tags/}" 
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            VERSION="${GITHUB_REF#refs/tags/}" 
+          else
+            VERSION="manual-${GITHUB_SHA::7}"
+          fi
           echo "VERSION=$VERSION" >> $GITHUB_ENV
 
       - name: Install build tools
@@ -42,9 +46,9 @@ jobs:
 
       - name: Archive executable
         run: |
-          ls -la
           echo "${EXEC}-${VERSION}"
           mkdir -p dist
+          ls -la
           cp "./${EXEC}" "dist/${EXEC}-${VERSION}"
 
       - name: Create GitHub Release
