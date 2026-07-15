@@ -1,5 +1,5 @@
 CC      ?= cc
-ifeq ($(OS,Windows_NT)
+ifeq ($(OS,Windows_NT))
 	TARGET := output.exe
 else
 	TARGET := output
