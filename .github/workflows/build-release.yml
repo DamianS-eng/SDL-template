@@ -148,40 +148,8 @@ jobs:
           key: sdl3-android-${{ runner.os }}-${{ env.SDL_VERSION }}-${{ hashFiles('**/*.gradle*') }}
       - name: Build SDL3 for Android
         run: |
-          if [ ! -d SDL ]; then
-            git clone https://github.com/libsdl-org/SDL.git
-          fi
-          cp -r SDL/android-project android-build
-          mkdir -p android-build/app/src/main/jni/src
-          cp *.c android-build/app/src/main/jni/src/ || true
-          cp *.cpp android-build/app/src/main/jni/src/ || true
-          cp *.h android-build/app/src/main/jni/src/ || true
-      - name: Configure Project
-        run: |
-          cd android-build
-          sed -i \
-            "s/SDL3/${EXEC}/g" \
-            app/build.gradle
-          mkdir -p app/src/main/jni/SDL
-          ln -s \
-            ../../../../../../SDL \
-            app/src/main/jni/SDL
-      - name: Build Android APK
-        run: |
-          cd android-build
-          chmod +x gradlew
-          ./gradlew assembleDebug
-      - name: Package APK
-        run: |
-          mkdir dist
-          cp android-build/app/build/outputs/apk/debug/app-debug.apk \
-            "dist/${EXEC}-android-${{ needs.version.outputs.VERSION }}.apk"
-      - name: Upload Android apk
-        uses: actions/upload-artifact@v4
-        with:
-          name: android
-          path: dist/*
-
+          echo "Test"
+          
   release:
     needs:
       - version
