@@ -77,50 +77,46 @@ jobs:
   windows:
     needs: version
     runs-on: windows-latest
-
+    defaults:
+      run:
+        shell: msys2{0}
     steps:
       - uses: actions/checkout@v4
-      - name: Install tools
-        run: |
-          choco install cmake ninja mingw pkgconfiglite -y
+      - uses: msys2/setup-msys2@v2
+        name: Install tools
+        with:
+          msystem: UCRT64
+          update: true
+          install: >
+            git
+            gcc
+            make
+            cmake
+            ninja
+            pkgconf
 
       - name: Cache SDL3
         id: sdl-cache
         uses: actions/cache@v4
         with:
           path: |
-            C:/Program Files/SDL3
+            "$PWD\SDL3"
           key: sdl3-windows-${{ runner.os }}-${{ env.SDL_VERSION }}
 
       - name: Build SDL3 for Windows
         if: steps.sdl-cache.outputs.cache-hit != 'true'
-        shell: bash
         run: |
-          echo "Before git clone"
-          pwd
-          ls -a
           git clone https://github.com/libsdl-org/SDL.git 
           cd SDL 
-          cmake -S . -B build -G Ninja -DSDL_STATIC=OFF -DSDL_SHARED=ON -DCMAKE_INSTALL_PREFIX="$PWD/install"
+          cmake -S . -B build -G Ninja -DSDL_STATIC=OFF -DSDL_SHARED=ON -DCMAKE_INSTALL_PREFIX=/ucrt64
           cmake --build build 
           cmake --install build
-          echo "Where is the .pc files..."
-          find . -name "*.pc"
-          export PKG_CONFIG_PATH="$PWD/install/lib/pkgconfig:$PKG_CONFIG_PATH"
-          echo "Cmake success. Verifying SDL3 install..."
-          ls "$PWD/install/lib/pkgconfig"
-          pkg-config --cflags sdl3
 
       - name: Build project
-        shell: bash
         run: |
-          echo "Building project..."
-          ls -a
-          pwd
           make
 
       - name: Package
-        shell: bash
         run: |
           mkdir -p dist
           cp "${EXEC}.exe" \
