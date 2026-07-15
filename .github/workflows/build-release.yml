@@ -92,8 +92,8 @@ jobs:
             make
             cmake
             ninja
-            mingw-w64-ucrt-x86_64-gcc
-            mingw-w64-ucrt-x86_64-pkgconf
+            gcc
+            pkgconf
 
       - name: Cache SDL3
         id: sdl-cache
@@ -106,26 +106,11 @@ jobs:
       - name: Build SDL3 for Windows
         if: steps.sdl-cache.outputs.cache-hit != 'true'
         run: |
-          git clone https://github.com/libsdl-org/SDL.git 
-          cd SDL 
-          cmake -S . -B build -G Ninja -DSDL_STATIC=OFF -DSDL_SHARED=ON -DCMAKE_INSTALL_PREFIX=C:/msys64/ucrt64
-          cmake --build build 
-          cmake --install build
-
-      - name: Build project
-        run: |
-          which cc
-          which pkg-config
-          pkg-config --cflags sdl3
-          pkg-config --libs sdl3
-          ls /ucrt64/include/SDL3/SDL_main.h
-          make
+          echo "Test"
 
       - name: Package
         run: |
           mkdir -p dist
-          cp "${EXEC}.exe" \
-            "dist/${EXEC}-windows-${{ needs.version.outputs.VERSION }}.exe"
 
       - name: Upload Windows exe
         uses: actions/upload-artifact@v4
