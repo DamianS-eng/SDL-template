@@ -89,11 +89,11 @@ jobs:
           update: true
           install: >
             git
-            gcc
             make
             cmake
             ninja
-            pkgconf
+            mingw-w64-ucrt-x86_64-gcc
+            mingw-w64-ucrt-x86_64-pkgconf
 
       - name: Cache SDL3
         id: sdl-cache
