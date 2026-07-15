@@ -108,7 +108,7 @@ jobs:
         run: |
           git clone https://github.com/libsdl-org/SDL.git 
           cd SDL 
-          cmake -S . -B build -G Ninja -DSDL_STATIC=OFF -DSDL_SHARED=ON -DCMAKE_INSTALL_PREFIX=/ucrt64
+          cmake -S . -B build -G Ninja -DSDL_STATIC=OFF -DSDL_SHARED=ON -DCMAKE_INSTALL_PREFIX=C:/msys64/ucrt64
           cmake --build build 
           cmake --install build
 
