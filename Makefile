@@ -1,12 +1,19 @@
-CC      = cc
-CFLAGS  = $(shell pkg-config --cflags sdl3)
-LDFLAGS = $(shell pkg-config --libs sdl3)
+CC      ?= cc
+ifeq ($(OS,Windows_NT)
+	TARGET := output.exe
+else
+	TARGET := output
+endif
 
-TARGET  = output
+PKG_CONFIG ?= pkg-config
+
+CFLAGS  += $(shell $(pkg-config) --cflags sdl3)
+LDLIBS += $(shell $(pkg-config) --libs sdl3)
+
 SRC     = main.c
 
 $(TARGET): $(SRC)
-	$(CC) $(SRC) -o $(TARGET) $(CFLAGS) $(LDFLAGS)
+	$(CC) $(CFLAGS) $(SRC) -o $@ $(LDLIBS)
 
 clean:
-	rm -f $(TARGET)
+	rm -f $@
