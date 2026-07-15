@@ -1,5 +1,5 @@
 CC      ?= cc
-ifeq ($(OS),Windows_NT)
+ifeq ($(shell uname -s),MINGW64_NT-*)
 	RM := del /Q
 	TARGET := output.exe
 else
