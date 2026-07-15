@@ -9,8 +9,8 @@ endif
 
 PKG_CONFIG ?= pkg-config
 
-CFLAGS  += $(shell $(PKG-CONFIG) --cflags sdl3)
-LDLIBS += $(shell $(PKG-CONFIG) --libs sdl3)
+CFLAGS  += $(shell $(PKG_CONFIG) --cflags sdl3)
+LDLIBS += $(shell $(PKG_CONFIG) --libs sdl3)
 
 SRC     = main.c
 
