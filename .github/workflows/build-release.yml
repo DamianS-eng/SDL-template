@@ -114,6 +114,11 @@ jobs:
 
       - name: Build project
         run: |
+          which cc
+          which pkg-config
+          pkg-config --cflags sdl3
+          pkg-config --libs sdl3
+          ls /ucrt64/include/SDL3/SDL_main.h
           make
 
       - name: Package
