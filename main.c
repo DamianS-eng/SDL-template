@@ -2,6 +2,7 @@
 #define SDL_MAIN_USE_CALLBACKS
 #include <SDL3/SDL_main.h>
 #include <SDL3/SDL.h>
+#include <math.h>
 
 static const char *name = "SDL Template";
 static const char *version = "1";
@@ -12,7 +13,7 @@ static SDL_AudioStream *stream = NULL;
 
 #define SAMPLE_RATE 41000
 #define FREQUENCY 440.f
-#define duration 3.0f
+#define DURATION 3.0f
 
 #define SDL_WINDOW_WIDTH 800
 #define SDL_WINDOW_HEIGHT 600
@@ -49,7 +50,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
   SDL_AudioSpec spec;
   spec.freq = SAMPLE_RATE;
   spec.format = SDL_AUDIO_F32;
-  pec.channels = 2;
+  spec.channels = 2;
 	
   stream = SDL_OpenAudioDeviceStream(audio_device, &spec, NULL, NULL);
   if(!stream) {
@@ -63,7 +64,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
         return SDL_APP_FAILURE;
   }
 
-  SDL_ResumeAudioDeviceStream(stream);
+  SDL_ResumeAudioStreamDevice(stream);
 	
   as->last_time = SDL_GetTicksNS();
 
@@ -121,7 +122,7 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
         // Queue samples into the stream
       if (!SDL_PutAudioStreamData(stream, buffer, count * sizeof(float))) {
           printf("SDL_PutAudioStreamData failed: %s\n", SDL_GetError());
-          break;
+		  return SDL_APP_FAILURE;
       }
 
       generated += count;
