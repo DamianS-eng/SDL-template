@@ -15,7 +15,7 @@ LDLIBS += $(shell $(PKG_CONFIG) --libs sdl3)
 SRC     = main.c
 
 $(TARGET): $(SRC)
-	$(CC) $(CFLAGS) $(SRC) -o $@ $(LDLIBS)
+	$(CC) -lm $(CFLAGS) $(SRC) -o $@ $(LDLIBS)
 
 clean:
 	$(RM) $(TARGET)
