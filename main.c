@@ -7,8 +7,12 @@ static const char *name = "SDL Template";
 static const char *version = "1";
 static const char *appid = "io.damians-eng.demo";
 
-static SDL_AudioDeviceID audio_device = 0;
+static SDL_AudioDeviceID audio_device = SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK;
 static SDL_AudioStream *stream = NULL;
+
+#define SAMPLE_RATE 41000
+#define FREQUENCY 440.f
+#define duration 3.0f
 
 #define SDL_WINDOW_WIDTH 800
 #define SDL_WINDOW_HEIGHT 600
@@ -42,40 +46,14 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
   }
   *appstate = as;
 
-  SDL_AudioSpec wavespec;
-  Uint8 *wavebuff = NULL;
-  Uint32 wavelen = 0;
-
-  SDL_AudioSpec desired;
-  SDL_zero(desired);
-  desired.freq = 48000;             // Hz
-  desired.format = SDL_AUDIO_F32;       // floating point
-  desired.channels = 2;             // stereo
-  
-  audio_device = SDL_OpenAudioDevice(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &desired);
-  if(!audio_device) {
-    fprintf(stderr, "Audio device error: %s\n", SDL_GetError()); 
-    SDL_free(wavebuff); 
-    return SDL_APP_FAILURE; 
-  }
-
-  stream = SDL_CreateAudioStream(&wavespec, &desired);
+  SDL_AudioSpec spec;
+  spec.freq = SAMPLE_RATE;
+  spec.format = SDL_AUDIO_F32;
+  pec.channels = 2;
+	
+  stream = SDL_OpenAudioDeviceStream(audio_device, &spec, NULL, NULL);
   if(!stream) {
-    fprintf(stderr, "Stream Problem. %s\n", SDL_GetError());
-    SDL_free(wavebuff);
-    return SDL_APP_FAILURE;
-  }
-
-  if (SDL_PutAudioStreamData(stream, wavebuff, wavelen) < 0) { 
-    fprintf(stderr, "Stream put error: %s\n", SDL_GetError()); 
-    SDL_free(wavebuff); 
-    return SDL_APP_FAILURE; 
-  }
-
-  SDL_free(wavebuff);
-
-  if (SDL_BindAudioStream(audio_device, stream) < 0) { 
-    fprintf(stderr, "Failed to bind stream to device: %s\n", SDL_GetError()); 
+    fprintf(stderr, "Audio stream error: %s\n", SDL_GetError()); 
     return SDL_APP_FAILURE; 
   }
 
@@ -85,8 +63,8 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
         return SDL_APP_FAILURE;
   }
 
-  SDL_ResumeAudioDevice(audio_device);
-
+  SDL_ResumeAudioDeviceStream(stream);
+	
   as->last_time = SDL_GetTicksNS();
 
   return SDL_APP_CONTINUE;
@@ -119,6 +97,36 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
         const Uint64 remaining = target_fpns - elapsed;
         SDL_DelayNS(remaining);
   }
+
+  int totalSamples = (int)(SAMPLE_RATE * DURATION);
+  float buffer[1024];
+
+  double phase = 0.0;
+  double phaseStep = 2.0 * M_PI * FREQUENCY / SAMPLE_RATE;
+
+  int generated = 0;
+  while (generated < totalSamples) {
+
+      int count = totalSamples - generated;
+      if (count > 1024)
+          count = 1024;
+
+      for (int i = 0; i < count; i++) {
+          buffer[i] = 0.2f * sin(phase);
+          phase += phaseStep;
+          if (phase >= 2.0 * M_PI)
+                phase -= 2.0 * M_PI;
+      }
+
+        // Queue samples into the stream
+      if (!SDL_PutAudioStreamData(stream, buffer, count * sizeof(float))) {
+          printf("SDL_PutAudioStreamData failed: %s\n", SDL_GetError());
+          break;
+      }
+
+      generated += count;
+  }
+	
   return SDL_APP_CONTINUE;
 };
 
