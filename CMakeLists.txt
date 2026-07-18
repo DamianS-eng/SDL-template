@@ -15,7 +15,7 @@ endif()
 add_executable(output WIN32 main.c)
 
 target_link_libraries(
-    main PRIVATE 
+    output PRIVATE 
     SDL3::SDL3 
     m
 )
