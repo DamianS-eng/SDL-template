@@ -61,12 +61,14 @@ jobs:
           sudo cmake --install build
 
       - name: Build project
-        run: make
+        run: |
+          cmake -S . -B build
+          cmake --build build
 
       - name: Package
         run: |
           mkdir -p dist
-          cp "${EXEC}" "dist/${EXEC}-linux-${{ needs.version.outputs.VERSION }}"
+          cp "build/${EXEC}" "dist/${EXEC}-linux-${{ needs.version.outputs.VERSION }}"
 
       - name: Upload linux artifact
         uses: actions/upload-artifact@v4
