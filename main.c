@@ -132,18 +132,17 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 };
 
 SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
-  if (event->common.type == SDL_EVENT_QUIT) {
-      return SDL_APP_SUCCESS;
-    }
-  if (event->type == SDL_EVENT_WINDOW_CLOSE_REQUESTED)
-    {
-      return SDL_APP_SUCCESS;
-    }
-  if ((event->type == SDL_EVENT_KEY_DOWN) && (event->key.key == SDLK_ESCAPE))
-    {
-      return SDL_APP_SUCCESS;
-    }
-  return SDL_APP_CONTINUE;
+  if ((event->type == SDL_EVENT_KEY_DOWN) && (event->key.key == SDLK_ESCAPE)) {
+    return SDL_APP_SUCCESS;
+  }
+  switch (event->type) {
+    case SDL_EVENT_QUIT:
+	  return SDL_APP_SUCCESS;
+	case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
+	  return SDL_APP_SUCCESS;
+	default:
+	  return SDL_APP_CONTINUE;
+  }
 };
 
 void SDL_AppQuit(void *appstate, SDL_AppResult result) {
