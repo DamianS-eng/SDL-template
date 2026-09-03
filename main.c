@@ -7,12 +7,11 @@
 static const char *name = "SDL Template";
 static const char *version = "1";
 static const char *appid = "io.damians-eng.demo";
-
 static SDL_AudioDeviceID audio_device = SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK;
 static SDL_AudioStream *stream = NULL;
 
 #define SAMPLE_RATE 41000
-#define FREQUENCY 440.f
+#define FREQUENCY 240.f
 #define DURATION 3.0f
 
 #define SDL_WINDOW_WIDTH 800
@@ -51,7 +50,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
   spec.freq = SAMPLE_RATE;
   spec.format = SDL_AUDIO_F32;
   spec.channels = 2;
-	
+
   stream = SDL_OpenAudioDeviceStream(audio_device, &spec, NULL, NULL);
   if(!stream) {
     fprintf(stderr, "Audio stream error: %s\n", SDL_GetError()); 
@@ -65,7 +64,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
   }
 
   SDL_ResumeAudioStreamDevice(stream);
-	
+
   as->last_time = SDL_GetTicksNS();
 
   return SDL_APP_CONTINUE;
@@ -82,16 +81,16 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
         SDL_RenderClear(as->renderer);
         
         SDL_SetRenderDrawColor(as->renderer, 30, 100, 200, SDL_ALPHA_OPAQUE);
-	const int rect_width = 100;
-	const int rect_height = 200;
+        const int rect_width = 100;
+        const int rect_height = 200;
         SDL_FRect rect = { 
-		// Make the rectangle start in the middle of the window
-		((SDL_WINDOW_WIDTH / 2) - (rect_width / 2)), 
-		((SDL_WINDOW_HEIGHT / 2) - (rect_height / 2)),
-		rect_width, 
-		rect_height
-		// this starts out fine, but this doesn't work if the window is resized later
-	};
+        // Make the rectangle start in the middle of the window
+            ((SDL_WINDOW_WIDTH / 2) - (rect_width / 2)), 
+            ((SDL_WINDOW_HEIGHT / 2) - (rect_height / 2)),
+            rect_width, 
+            rect_height
+// this starts out fine, but this doesn't work if the window is resized later
+        };
         SDL_RenderFillRect(as->renderer, &rect);
         SDL_RenderPresent(as->renderer);
   } else {
@@ -107,27 +106,24 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 
   int generated = 0;
   while (generated < totalSamples) {
-
       int count = totalSamples - generated;
-      if (count > 1024)
+      if (count > 1024) {
           count = 1024;
-
+      }
       for (int i = 0; i < count; i++) {
           buffer[i] = 0.2f * sin(phase);
           phase += phaseStep;
-          if (phase >= 2.0 * M_PI)
+          if (phase >= 2.0 * M_PI) {
                 phase -= 2.0 * M_PI;
+          }
       }
-
         // Queue samples into the stream
       if (!SDL_PutAudioStreamData(stream, buffer, count * sizeof(float))) {
           printf("SDL_PutAudioStreamData failed: %s\n", SDL_GetError());
-		  return SDL_APP_FAILURE;
+          return SDL_APP_FAILURE;
       }
-
       generated += count;
   }
-	
   return SDL_APP_CONTINUE;
 };
 
@@ -137,11 +133,11 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
   }
   switch (event->type) {
     case SDL_EVENT_QUIT:
-	  return SDL_APP_SUCCESS;
-	case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
-	  return SDL_APP_SUCCESS;
-	default:
-	  return SDL_APP_CONTINUE;
+      return SDL_APP_SUCCESS;
+    case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
+      return SDL_APP_SUCCESS;
+    default:
+      return SDL_APP_CONTINUE;
   }
 };
 
