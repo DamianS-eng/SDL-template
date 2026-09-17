@@ -22,7 +22,7 @@ typedef struct
 {
         SDL_Window *window;
         SDL_Renderer *renderer;
-	SDL_AudioStream *stream;
+		SDL_AudioStream *stream;
         Uint64 last_time;
 } AppState;
 
@@ -35,7 +35,11 @@ static int pulse_samples_remaining = 0;
 
 static float PianoKeyToFrequency(int key) {
     return A4 * SDL_powf(2.0f, (key - midPiano) / 12.0f);
-    // 440 * 2^((key - 49)/12) not sure why 12...
+	/*
+    // 440 * 2^((key - 49)/12) because each of the 9 octaves have 12 possible notes 
+	// the possible returns are between 16 and 8000 Hz
+	// Use the table at https://muted.io/note-frequencies/ for reference
+	*/
 }
 
 static void SDLCALL FeedTheAudioStreamMore(void *userdata, SDL_AudioStream *astream, int additional_amount, int total_amount)
@@ -163,15 +167,15 @@ SDL_AppResult SDL_AppIterate(void *appstate)
 
 	SDL_SetRenderDrawColor(as->renderer, 30, 100, 200, SDL_ALPHA_OPAQUE);
 	const int rect_width = 100;
-        const int rect_height = 200;
-        SDL_FRect rect = {
+    const int rect_height = 200;
+    SDL_FRect rect = {
         // Place the rectangle in the middle of the window
-            ((SDL_WINDOW_WIDTH / 2) - (rect_width / 2)),
-            ((SDL_WINDOW_HEIGHT / 2) - (rect_height / 2)),
-            rect_width,
-            rect_height
-        };
-        SDL_RenderFillRect(as->renderer, &rect);
+        ((SDL_WINDOW_WIDTH / 2) - (rect_width / 2)),
+        ((SDL_WINDOW_HEIGHT / 2) - (rect_height / 2)),
+        rect_width,
+        rect_height
+    };
+    SDL_RenderFillRect(as->renderer, &rect);
 	SDL_RenderPresent(as->renderer);
     } else {
         const Uint64 remaining = target_fpns - elapsed;
