@@ -22,8 +22,10 @@ typedef struct
 {
         SDL_Window *window;
         SDL_Renderer *renderer;
-		SDL_AudioStream *stream;
+	SDL_AudioStream *stream;
         Uint64 last_time;
+	bool clicked;
+	bool inside;
 } AppState;
 
 const Uint64 target_fpns = (Uint64)(1e9 / TARGET_FPS);
@@ -35,11 +37,9 @@ static int pulse_samples_remaining = 0;
 
 static float PianoKeyToFrequency(int key) {
     return A4 * SDL_powf(2.0f, (key - midPiano) / 12.0f);
-	/*
-    // 440 * 2^((key - 49)/12) because each of the 9 octaves have 12 possible notes 
-	// the possible returns are between 16 and 8000 Hz
-	// Use the table at https://muted.io/note-frequencies/ for reference
-	*/
+    // 440 * 2^((key - 49)/12) because each of the 9 octaves have 12 possible notes
+    // the possible returns are between 16 and 8000 Hz
+    // Use the table at https://muted.io/note-frequencies/ for reference
 }
 
 static void SDLCALL FeedTheAudioStreamMore(void *userdata, SDL_AudioStream *astream, int additional_amount, int total_amount)
@@ -145,9 +145,36 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event)
       if (piano_key > 88) { piano_key = 88;}
       break;
     case SDL_EVENT_MOUSE_BUTTON_DOWN:
-      if (event->button.button == SDL_BUTTON_LEFT) {
+      as->clicked = event->button.down;
+      if ((event->button.button == SDL_BUTTON_LEFT) && (as->inside)) {
           pulse_samples_remaining = (int)(SAMPLE_RATE * BRIEF_SOUND_LENGTH);
       } 
+      break;
+    case SDL_EVENT_MOUSE_BUTTON_UP:
+      as->clicked = event->button.down;
+      break;
+    case SDL_EVENT_MOUSE_MOTION:
+      //SDL_Log("Current mouse position is: (%f, %f)", event->motion.x, event->motion.y);
+      as->inside = false;
+      int beginx = ((SDL_WINDOW_WIDTH / 2) - (100 / 2));
+      int endx = ((SDL_WINDOW_WIDTH / 2) + (100 / 2));
+      int beginy = ((SDL_WINDOW_HEIGHT/ 2) - (200 / 2));
+      int endy = ((SDL_WINDOW_HEIGHT/ 2) + (200 / 2));
+      /*
+      if ( beginx < event->motion.x ) {SDL_Log("Inside top left. ");}
+      if ( event->motion.x < endx ) {SDL_Log("Inside top right. ");}
+      if ( beginy < event->motion.y ) {SDL_Log("Inside bottom left. ");}
+      if ( event->motion.y < endy ) {SDL_Log("Inside bottom right. ");}
+      */
+      if ( 
+	    ( beginx < event->motion.x ) && 
+	    ( event->motion.x < endx ) && 
+            ( beginy < event->motion.y) &&
+	    ( event->motion.y < endy)) {
+	  SDL_Log("Inside!");
+          as->inside = true;
+      }
+      SDL_Log("\n");
       break;
     default:
       return SDL_APP_CONTINUE;
@@ -161,25 +188,30 @@ SDL_AppResult SDL_AppIterate(void *appstate)
     const Uint64 now = SDL_GetTicksNS();
     const Uint64 elapsed = now - as->last_time;
     if (elapsed >= target_fpns) {
-	as->last_time = now;
-	SDL_SetRenderDrawColor(as->renderer, 30, 30, 30, SDL_ALPHA_OPAQUE);
-	SDL_RenderClear(as->renderer);
-
-	SDL_SetRenderDrawColor(as->renderer, 30, 100, 200, SDL_ALPHA_OPAQUE);
-	const int rect_width = 100;
-    const int rect_height = 200;
-    SDL_FRect rect = {
-        // Place the rectangle in the middle of the window
-        ((SDL_WINDOW_WIDTH / 2) - (rect_width / 2)),
-        ((SDL_WINDOW_HEIGHT / 2) - (rect_height / 2)),
-        rect_width,
-        rect_height
-    };
-    SDL_RenderFillRect(as->renderer, &rect);
-	SDL_RenderPresent(as->renderer);
+        as->last_time = now;
+        SDL_SetRenderDrawColor(as->renderer, 30, 30, 30, SDL_ALPHA_OPAQUE);
+        SDL_RenderClear(as->renderer);
+    
+        SDL_SetRenderDrawColor(as->renderer, 30, 100, 200, SDL_ALPHA_OPAQUE);
+        const int rect_width = 100;
+        const int rect_height = 200;
+        SDL_FRect rect = {
+            // Place the rectangle in the middle of the window
+                ((SDL_WINDOW_WIDTH / 2) - (rect_width / 2)),
+                ((SDL_WINDOW_HEIGHT / 2) - (rect_height / 2)),
+                rect_width,
+                rect_height
+        };
+        SDL_RenderRect(as->renderer, &rect);
+        if (as->inside) {SDL_RenderFillRect(as->renderer, &rect);}
+        if (as->clicked && as->inside) {
+            SDL_SetRenderDrawColor(as->renderer, 200, 100, 0, SDL_ALPHA_OPAQUE);
+            SDL_RenderFillRect(as->renderer, &rect);
+        }
+        SDL_RenderPresent(as->renderer);
     } else {
         const Uint64 remaining = target_fpns - elapsed;
-	SDL_DelayNS(remaining);
+        SDL_DelayNS(remaining);
     }
 
     return SDL_APP_CONTINUE; 
