@@ -132,7 +132,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y cmake ninja-build git unzip
       - name: Install Android SDK
-        uses: android-actions/setup-android@v3
+        uses: android-actions/setup-android@v4
       - name: Install NDK
         run: |
           sdkmanager \
