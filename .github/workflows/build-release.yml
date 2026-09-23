@@ -108,7 +108,14 @@ jobs:
       - name: Build SDL3 for Windows
         if: steps.sdl-cache.outputs.cache-hit != 'true'
         run: |
-          echo "Test"
+          git clone --depth 1 --branch "release-${{env.SDL_VERSION }}" https://github.com/libsdl-org/SDL.git SDL3
+          cmake -S SDL3 -B SDL3/build \
+            -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX="$PWD/SDL3/install" \
+            -DSDL_TESTS=OFF \
+            -DSDL_EXAMPLES=OFF
+          cmake --build build
 
       - name: Package
         run: |
